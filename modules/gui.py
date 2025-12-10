@@ -204,11 +204,24 @@ class IndustrialHMIMonitor(QMainWindow):
         if index >= 0:
             self.com_dropdown.setCurrentIndex(index)
 
+
+
+
+
     def _create_dashboard(self) -> QGroupBox:
+        """
+        Build the main dashboard with time-series graphs and spectral views.
+
+        Notes:
+        - Spectral data:
+            Backend provides 9 values: [F1..F8, NIR] with CLEAR already removed.
+        - All spectral labels are colour/wavelength; CLEAR is not shown in the GUI.
+        """
         dashboard = QGroupBox("Sensor Dashboard")
         layout = QGridLayout()
         self.spectral_curves = []
 
+        # Helper to define the standard time-series graphs
         def add_graph(title: str, y_label: str, pen_color: str, position: tuple) -> None:
             pw = PlotWidget(title=title)
             pw.setLabel("left", y_label)
@@ -222,40 +235,40 @@ class IndustrialHMIMonitor(QMainWindow):
         add_graph("pH Value", "pH", "b", (0, 1))
         add_graph("Harvesting Rate (kg/h)", "kg/h", "y", (0, 2))
 
-        # Spectral colours and labels
+        # Spectral colours and labels (CLEAR is intentionally omitted)
+        # Order matches backend: [F1, F2, F3, F4, F5, F6, F7, F8, NIR]
         self.spectral_colors = [
-            (148, 0, 211),   # F1
-            (75, 0, 130),    # F2
-            (0, 0, 255),     # F3
-            (0, 255, 255),   # F4
-            (0, 255, 0),     # F5 (Green)
-            (173, 255, 47),  # F6
-            (255, 165, 0),   # F7
-            (255, 69, 0),    # F8
-            (255, 0, 0),     # CLEAR
-            (139, 0, 0),     # NIR
+            (148, 0, 211),   # Violet – 415nm (F1)
+            (75, 0, 130),    # Indigo – 445nm (F2)
+            (0, 0, 255),     # Blue – 480nm   (F3)
+            (0, 255, 255),   # Cyan – 515nm   (F4)
+            (0, 255, 0),     # Green – 555nm  (F5)
+            (173, 255, 47),  # Yellow – 590nm (F6)
+            (255, 165, 0),   # Orange – 630nm (F7)
+            (255, 69, 0),    # Red – 680nm    (F8)
+            (139, 0, 0),     # Near IR – 740nm (NIR)
         ]
 
         self.channel_labels = [
-            "F1",
-            "F2",
-            "F3",
-            "F4",
+            "Violet – 415nm",
+            "Indigo – 445nm",
+            "Blue – 480nm",
+            "Cyan – 515nm",
             "Green – 555nm",
-            "F6",
-            "F7",
-            "F8",
-            "CLEAR",
-            "NIR",
+            "Yellow – 590nm",
+            "Orange – 630nm",
+            "Red – 680nm",
+            "Near IR – 740nm",
         ]
 
         # Multi-Spectral Analysis (line plot)
         self.multi_spectral_analysis_plot = PlotWidget(title="Multi-Spectral Analysis")
         self.multi_spectral_analysis_plot.setLabel("left", "Intensity")
-        self.multi_spectral_analysis_plot.setLabel("bottom", "Channel index")
+        self.multi_spectral_analysis_plot.setLabel("bottom", "Channel")
         self.multi_spectral_analysis_plot.addLegend()
         self.plots["Multi-Spectral Analysis"] = self.multi_spectral_analysis_plot
 
+        # One curve per spectral channel, all labelled with colour/wavelength
         for color, label in zip(self.spectral_colors, self.channel_labels):
             pen = mkPen(color=color, width=2)
             curve = self.multi_spectral_analysis_plot.plot(pen=pen, name=label)
@@ -263,7 +276,7 @@ class IndustrialHMIMonitor(QMainWindow):
 
         layout.addWidget(self.multi_spectral_analysis_plot, 1, 0, 1, 3)
 
-        # Real-time bar graph snapshot
+        # Real-time bar graph snapshot (also no CLEAR)
         self.spectral_bar_values = [0] * len(self.channel_labels)
         self.spectral_bar_plot = PlotWidget(title="Multi-Spectral Snapshot")
         self.spectral_bar_plot.setLabel("left", "Intensity")
@@ -286,6 +299,90 @@ class IndustrialHMIMonitor(QMainWindow):
 
         dashboard.setLayout(layout)
         return dashboard
+
+
+    # def _create_dashboard(self) -> QGroupBox:
+    #     dashboard = QGroupBox("Sensor Dashboard")
+    #     layout = QGridLayout()
+    #     self.spectral_curves = []
+
+    #     def add_graph(title: str, y_label: str, pen_color: str, position: tuple) -> None:
+    #         pw = PlotWidget(title=title)
+    #         pw.setLabel("left", y_label)
+    #         curve = pw.plot(pen=pen_color)
+    #         self.graphs[title] = curve
+    #         self.plots[title] = pw
+    #         layout.addWidget(pw, *position)
+
+    #     # Main time-series graphs
+    #     add_graph("Temperature (°C)", "Temperature (°C)", "g", (0, 0))
+    #     add_graph("pH Value", "pH", "b", (0, 1))
+    #     add_graph("Harvesting Rate (kg/h)", "kg/h", "y", (0, 2))
+
+    #     # Spectral colours and labels
+    #     self.spectral_colors = [
+    #         (148, 0, 211),   # F1
+    #         (75, 0, 130),    # F2
+    #         (0, 0, 255),     # F3
+    #         (0, 255, 255),   # F4
+    #         (0, 255, 0),     # F5 (Green)
+    #         (173, 255, 47),  # F6
+    #         (255, 165, 0),   # F7
+    #         (255, 69, 0),    # F8
+    #         (255, 0, 0),     # CLEAR
+    #         (139, 0, 0),     # NIR
+    #     ]
+
+    #     self.channel_labels = [
+    #         "F1",
+    #         "F2",
+    #         "F3",
+    #         "F4",
+    #         "Green – 555nm",
+    #         "F6",
+    #         "F7",
+    #         "F8",
+    #         "CLEAR",
+    #         "NIR",
+    #     ]
+
+    #     # Multi-Spectral Analysis (line plot)
+    #     self.multi_spectral_analysis_plot = PlotWidget(title="Multi-Spectral Analysis")
+    #     self.multi_spectral_analysis_plot.setLabel("left", "Intensity")
+    #     self.multi_spectral_analysis_plot.setLabel("bottom", "Channel index")
+    #     self.multi_spectral_analysis_plot.addLegend()
+    #     self.plots["Multi-Spectral Analysis"] = self.multi_spectral_analysis_plot
+
+    #     for color, label in zip(self.spectral_colors, self.channel_labels):
+    #         pen = mkPen(color=color, width=2)
+    #         curve = self.multi_spectral_analysis_plot.plot(pen=pen, name=label)
+    #         self.spectral_curves.append(curve)
+
+    #     layout.addWidget(self.multi_spectral_analysis_plot, 1, 0, 1, 3)
+
+    #     # Real-time bar graph snapshot
+    #     self.spectral_bar_values = [0] * len(self.channel_labels)
+    #     self.spectral_bar_plot = PlotWidget(title="Multi-Spectral Snapshot")
+    #     self.spectral_bar_plot.setLabel("left", "Intensity")
+    #     self.spectral_bar_plot.setLabel("bottom", "Channel")
+    #     self.spectral_bar_plot.setYRange(0, 4095)
+
+    #     x_positions = list(range(len(self.channel_labels)))
+    #     self.spectral_bar_item = BarGraphItem(
+    #         x=x_positions,
+    #         height=self.spectral_bar_values,
+    #         width=0.6,
+    #         brushes=[QColor(*color) for color in self.spectral_colors],
+    #     )
+    #     self.spectral_bar_plot.addItem(self.spectral_bar_item)
+
+    #     ax = self.spectral_bar_plot.getAxis("bottom")
+    #     ax.setTicks([list(zip(x_positions, self.channel_labels))])
+
+    #     layout.addWidget(self.spectral_bar_plot, 2, 0, 1, 3)
+
+    #     dashboard.setLayout(layout)
+    #     return dashboard
 
     # ------------------------------------------------------------------
     # Monitoring control

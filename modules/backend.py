@@ -1,13 +1,7 @@
-"""
-modules/backend.py
 
-Modbus backend with a QThread-based poller that scales to multiple reactors.
-"""
-
-from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Callable, Tuple
 
 import datetime
 import threading
@@ -30,9 +24,26 @@ class ModbusPoller(QThread):
     """
     QThread that polls Modbus devices for one reactor.
 
-    Emits:
-        reading_ready(dict)  - full data snapshot for this reactor.
-        error(str)           - error messages suitable for status bar.
+    Behaviour:
+    ----------
+    - Runs in its own thread (GUI stays responsive).
+    - Each cycle:
+        * Applies any pending LED/relay target changes.
+        * Reads pH/temperature from the pH transmitter.
+        * Reads spectral data + status word from the AS7341 board.
+        * Emits one 'reading_ready' dict if both reads succeed.
+
+    - If a Modbus call fails:
+        * It is retried up to `max_retries` times for that cycle.
+        * If still failing after retries:
+            - An 'error' signal is emitted.
+            - No reading is emitted for that cycle.
+            - The loop continues; next cycle tries again.
+
+    Signals:
+    --------
+    reading_ready(dict)  - full data snapshot for this reactor.
+    error(str)           - error messages suitable for status bar/log.
     """
 
     reading_ready = pyqtSignal(dict)
@@ -43,18 +54,24 @@ class ModbusPoller(QThread):
         port: str,
         reactor_config: ReactorConfig,
         poll_interval_ms: int = 1000,
+        max_retries: int = 3,
         parent=None,
     ) -> None:
         super().__init__(parent)
         self._port = port
         self._config = reactor_config
         self._poll_interval_ms = max(100, poll_interval_ms)
+        self._max_retries = max(1, max_retries)
         self._running = False
 
+        # Targets for LED/relay written by GUI thread
         self._lock = threading.Lock()
         self._target_led = 0
         self._target_relay = 0
 
+    # ------------------------------------------------------------------
+    # Public control API (called from GUI thread)
+    # ------------------------------------------------------------------
     def set_poll_interval_ms(self, interval_ms: int) -> None:
         """
         Update the poll interval while running.
@@ -78,11 +95,58 @@ class ModbusPoller(QThread):
 
     def stop(self) -> None:
         """
-        Stop the poll loop.
+        Stop the poll loop. The thread will exit after the current cycle.
         """
         self._running = False
 
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    def _with_retries(self, label: str, func: Callable[[], Any]) -> Any:
+        """
+        Execute `func` with simple retry-on-exception logic.
+
+        Parameters
+        ----------
+        label : str
+            Human-readable label for error messages (e.g. "read spectral").
+        func : callable
+            Function with no arguments to call.
+
+        Returns
+        -------
+        Any
+            Whatever `func()` returns on success.
+
+        Raises
+        ------
+        Exception
+            The last exception if all retries fail.
+        """
+        last_exc: Exception | None = None
+        for attempt in range(1, self._max_retries + 1):
+            try:
+                return func()
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                self.error.emit(
+                    f"{label} failed (attempt {attempt}/{self._max_retries}): {exc}"
+                )
+        # If we get here, all retries failed
+        raise last_exc if last_exc is not None else RuntimeError(
+            f"{label} failed after {self._max_retries} attempts"
+        )
+
+    # ------------------------------------------------------------------
+    # Thread entry point
+    # ------------------------------------------------------------------
     def run(self) -> None:
+        """
+        Main poll loop.
+
+        - Creates the Modbus instruments.
+        - Loops until `stop()` is called.
+        """
         try:
             ph_sensor = CwtBlPhSensor(
                 port=self._port,
@@ -92,34 +156,53 @@ class ModbusPoller(QThread):
                 port=self._port,
                 slave_address=self._config.spectral_slave_id,
             )
-        except Exception as exc:
-            self.error.emit(f"Failed to open Modbus devices: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            self.error.emit(f"Failed to open Modbus devices on {self._port}: {exc}")
             return
 
         self._running = True
 
-        current_led = None  # type: ignore
-        current_relay = None  # type: ignore
+        current_led: int | None = None
+        current_relay: int | None = None
 
         while self._running:
-            try:
-                with self._lock:
-                    led_target = self._target_led
-                    relay_target = self._target_relay
-                    interval_ms = self._poll_interval_ms
+            # Snapshot config/targets under lock
+            with self._lock:
+                led_target = self._target_led
+                relay_target = self._target_relay
+                interval_ms = self._poll_interval_ms
 
-                # Apply pending control changes
+            try:
+                # ------------------------------------------------------
+                # Apply pending LED/relay changes with retries
+                # ------------------------------------------------------
                 if current_led is None or led_target != current_led:
-                    spectral.write_led(led_target)
+                    self._with_retries(
+                        "write LED",
+                        lambda: spectral.write_led(led_target),
+                    )
                     current_led = led_target
 
                 if current_relay is None or relay_target != current_relay:
-                    spectral.write_relay(relay_target)
+                    self._with_retries(
+                        "write relay",
+                        lambda: spectral.write_relay(relay_target),
+                    )
                     current_relay = relay_target
 
-                # Read sensor values
-                temp_c, ph = ph_sensor.read_all()
-                light_values, status_word = spectral.read_spectral()
+                # ------------------------------------------------------
+                # Read sensors with retries
+                # ------------------------------------------------------
+                def _read_ph_all() -> Tuple[float, float]:
+                    return ph_sensor.read_all()
+
+                def _read_spectral() -> Tuple[list[int], int]:
+                    return spectral.read_spectral()
+
+                temp_c, ph = self._with_retries("read pH/temperature", _read_ph_all)
+                light_values, status_word = self._with_retries(
+                    "read spectral", _read_spectral
+                )
 
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -128,7 +211,7 @@ class ModbusPoller(QThread):
                     "timestamp": timestamp,
                     "temperature": temp_c,
                     "pH": {"value": ph},
-                    "light": light_values,
+                    "light": light_values,   # list of 9 ints (F1..F8, NIR; CLEAR removed)
                     "relay": current_relay,
                     "led": current_led,
                     "status": status_word,
@@ -138,7 +221,10 @@ class ModbusPoller(QThread):
 
                 if status_word != 0:
                     self.error.emit(f"AS7341 status word: {status_word}")
-            except Exception as exc:
-                self.error.emit(f"Modbus poll error: {exc}")
 
+            except Exception as exc:  # noqa: BLE001
+                # Any failure after retries is reported; we skip emitting a reading
+                self.error.emit(f"Modbus poll cycle failed: {exc}")
+
+            # Wait until next cycle
             self.msleep(interval_ms)

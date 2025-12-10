@@ -142,21 +142,38 @@ class As7341Controller:
             signed=False,
         )
 
+
+
+
     def read_spectral(self) -> Tuple[List[int], int]:
         """
-        Read all spectral channels and the status word.
+        Read spectral channels and the status word.
+
+        The hardware exposes:
+            [F1, F2, F3, F4, F5, F6, F7, F8, CLEAR, NIR]
+
+        For the GUI we *ignore* CLEAR, so we return:
+            [F1, F2, F3, F4, F5, F6, F7, F8, NIR]
 
         Returns
         -------
         (values, status_word)
-            values: list of 10 ints [F1..F8, CLEAR, NIR]
+            values: list of 9 ints [F1..F8, NIR]
             status_word: 0 = OK, nonzero indicates errors.
         """
-        values = self._instrument.read_registers(
+        raw_values = self._instrument.read_registers(
             registeraddress=self.REG_FIRST_SPECTRAL,
             number_of_registers=self.NUM_SPECTRAL_REGS,
             functioncode=3,
         )
+        # raw_values: [F1, F2, F3, F4, F5, F6, F7, F8, CLEAR, NIR]
+        if len(raw_values) >= 10:
+            # Drop CLEAR (index 8), keep everything else
+            values = raw_values[:8] + raw_values[9:]
+        else:
+            # Fallback: just return what we got; GUI will clamp to its channel count
+            values = raw_values
+
         status_word = self._instrument.read_register(
             registeraddress=self.REG_STATUS_WORD,
             number_of_decimals=0,
@@ -164,3 +181,26 @@ class As7341Controller:
             signed=False,
         )
         return values, status_word
+
+    # def read_spectral(self) -> Tuple[List[int], int]:
+    #     """
+    #     Read all spectral channels and the status word.
+
+    #     Returns
+    #     -------
+    #     (values, status_word)
+    #         values: list of 10 ints [F1..F8, CLEAR, NIR]
+    #         status_word: 0 = OK, nonzero indicates errors.
+    #     """
+    #     values = self._instrument.read_registers(
+    #         registeraddress=self.REG_FIRST_SPECTRAL,
+    #         number_of_registers=self.NUM_SPECTRAL_REGS,
+    #         functioncode=3,
+    #     )
+    #     status_word = self._instrument.read_register(
+    #         registeraddress=self.REG_STATUS_WORD,
+    #         number_of_decimals=0,
+    #         functioncode=3,
+    #         signed=False,
+    #     )
+    #     return values, status_word
