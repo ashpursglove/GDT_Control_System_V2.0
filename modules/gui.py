@@ -36,21 +36,7 @@ from PyQt5.QtWidgets import (
     QScrollArea,
 )
 
-# from PyQt5.QtWidgets import (
-#     QMainWindow,
-#     QWidget,
-#     QVBoxLayout,
-#     QHBoxLayout,
-#     QLabel,
-#     QComboBox,
-#     QPushButton,
-#     QGridLayout,
-#     QGroupBox,
-#     QTabWidget,
-#     QTextEdit,
-#     QFileDialog,
-#     QSpinBox,
-# )
+
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtCore import Qt
 
@@ -183,131 +169,6 @@ class IndustrialHMIMonitor(QMainWindow):
         self.statusBar().showMessage("Ready")
 
 
-    # def _init_ui(self) -> None:
-    #     self.setWindowTitle("GDT Reactor Monitoring and Control System")
-    #     self.setGeometry(100, 100, 1400, 850)
-
-    #     icon_path = resource_path("assets/icon.ico")
-    #     self.setWindowIcon(QIcon(icon_path))
-
-    #     self.tabs = QTabWidget()
-
-    #     # Dashboard tab (Reactor 1)
-    #     self.dashboard_tab = QWidget()
-    #     dashboard_layout = QVBoxLayout()
-    #     self.top_bar = self._create_top_bar()
-    #     self.dashboard = self._create_dashboard()
-    #     dashboard_layout.addLayout(self.top_bar)
-    #     dashboard_layout.addWidget(self.dashboard)
-    #     self.dashboard_tab.setLayout(dashboard_layout)
-
-    #     # Data / log tab
-    #     self.serial_data_tab = QWidget()
-    #     serial_data_layout = QVBoxLayout()
-    #     self.serial_data_view = QLabel("Incoming Data Snapshot:")
-    #     self.serial_data_area = QTextEdit()
-    #     self.serial_data_area.setReadOnly(True)
-    #     serial_data_layout.addWidget(self.serial_data_view)
-    #     serial_data_layout.addWidget(self.serial_data_area)
-    #     self.serial_data_tab.setLayout(serial_data_layout)
-
-    #     # Configuration tab (COM port etc.)
-    #     self.config_tab = self._create_config_tab()
-
-    #     # Add tabs (order matters; config goes at the end)
-    #     self.tabs.addTab(self.dashboard_tab, "Reactor 1")
-    #     self.tabs.addTab(self.serial_data_tab, "Sensor Data Log")
-    #     self.tabs.addTab(self.config_tab, "Configuration")
-
-    #     central_widget = QWidget()
-    #     main_layout = QVBoxLayout()
-    #     main_layout.addWidget(self.tabs)
-    #     central_widget.setLayout(main_layout)
-    #     self.setCentralWidget(central_widget)
-
-    #     # Status bar
-    #     self.statusBar().showMessage("Ready")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # def _init_ui(self) -> None:
-    #     self.setWindowTitle("GDT Reactor Monitoring and Control System")
-    #     self.setGeometry(100, 100, 1400, 850)
-
-    #     icon_path = resource_path("assets/icon.ico")
-    #     self.setWindowIcon(QIcon(icon_path))
-
-    #     self.tabs = QTabWidget()
-
-    #     # Dashboard tab
-    #     self.dashboard_tab = QWidget()
-    #     dashboard_layout = QVBoxLayout()
-    #     self.top_bar = self._create_top_bar()
-    #     self.dashboard = self._create_dashboard()
-    #     dashboard_layout.addLayout(self.top_bar)
-    #     dashboard_layout.addWidget(self.dashboard)
-    #     self.dashboard_tab.setLayout(dashboard_layout)
-
-    #     # Serial data / log tab
-    #     self.serial_data_tab = QWidget()
-    #     serial_data_layout = QVBoxLayout()
-    #     self.serial_data_view = QLabel("Incoming Data Snapshot:")
-    #     self.serial_data_area = QTextEdit()
-    #     self.serial_data_area.setReadOnly(True)
-    #     serial_data_layout.addWidget(self.serial_data_view)
-    #     serial_data_layout.addWidget(self.serial_data_area)
-    #     self.serial_data_tab.setLayout(serial_data_layout)
-
-    #     self.tabs.addTab(self.dashboard_tab, "Live Data")
-    #     self.tabs.addTab(self.serial_data_tab, "Sensor Data Log")
-
-    #     central_widget = QWidget()
-    #     main_layout = QVBoxLayout()
-    #     main_layout.addWidget(self.tabs)
-    #     central_widget.setLayout(main_layout)
-    #     self.setCentralWidget(central_widget)
-
-    #     # Status bar
-    #     self.statusBar().showMessage("Ready")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def _create_top_bar(self) -> QHBoxLayout:
         """
@@ -428,82 +289,6 @@ class IndustrialHMIMonitor(QMainWindow):
 
 
 
-    # def _create_top_bar(self) -> QHBoxLayout:
-    #     layout = QHBoxLayout()
-
-    #     # COM port selection
-    #     self.com_label = QLabel("Port:")
-    #     self.com_dropdown = QComboBox()
-    #     self.refresh_button = QPushButton("Refresh")
-    #     self.refresh_button.clicked.connect(self._refresh_com_ports)
-    #     self._refresh_com_ports()
-
-    #     # Poll interval selection
-    #     self.poll_label = QLabel("Poll interval:")
-    #     self.poll_combo = QComboBox()
-    #     self.poll_combo.addItem("0.5 s", 500)
-    #     self.poll_combo.addItem("1.0 s", 1000)
-    #     self.poll_combo.addItem("2.0 s", 2000)
-    #     self.poll_combo.addItem("5.0 s", 5000)
-    #     self.poll_combo.setCurrentIndex(1)
-
-    #     # Slave IDs
-    #     self.ph_id_label = QLabel("pH/Temp ID:")
-    #     self.ph_id_spin = QSpinBox()
-    #     self.ph_id_spin.setRange(1, 247)
-    #     self.ph_id_spin.setValue(22)
-
-    #     self.spectral_id_label = QLabel("Spectral ID:")
-    #     self.spectral_id_spin = QSpinBox()
-    #     self.spectral_id_spin.setRange(1, 247)
-    #     self.spectral_id_spin.setValue(50)
-
-    #     # Start / Stop
-    #     self.start_button = QPushButton("Start")
-    #     self.start_button.clicked.connect(self.start_monitoring)
-
-    #     self.stop_button = QPushButton("Stop")
-    #     self.stop_button.setEnabled(False)
-    #     self.stop_button.clicked.connect(self.stop_monitoring)
-
-    #     # Relay control
-    #     self.relay_button = QPushButton("Circ Pump: OFF")
-    #     self.relay_button.setCheckable(True)
-    #     self.relay_button.clicked.connect(self.toggle_relay)
-
-    #     # LED control
-    #     self.led_button = QPushButton("Light Source: OFF")
-    #     self.led_button.setCheckable(True)
-    #     self.led_button.clicked.connect(self.toggle_led)
-
-    #     # Export
-    #     self.export_button = QPushButton("Export to CSV")
-    #     self.export_button.clicked.connect(self.export_to_csv)
-
-    #     layout.addWidget(self.com_label)
-    #     layout.addWidget(self.com_dropdown)
-    #     layout.addWidget(self.refresh_button)
-    #     layout.addSpacing(15)
-
-    #     layout.addWidget(self.poll_label)
-    #     layout.addWidget(self.poll_combo)
-    #     layout.addSpacing(15)
-
-    #     layout.addWidget(self.ph_id_label)
-    #     layout.addWidget(self.ph_id_spin)
-    #     layout.addWidget(self.spectral_id_label)
-    #     layout.addWidget(self.spectral_id_spin)
-    #     layout.addSpacing(15)
-
-    #     layout.addWidget(self.start_button)
-    #     layout.addWidget(self.stop_button)
-    #     layout.addWidget(self.relay_button)
-    #     layout.addWidget(self.led_button)
-    #     layout.addWidget(self.export_button)
-
-    #     layout.addStretch(1)
-    #     return layout
-
     def _refresh_com_ports(self) -> None:
         """
         Populate or refresh the list of available serial ports.
@@ -615,91 +400,6 @@ class IndustrialHMIMonitor(QMainWindow):
 
         dashboard.setLayout(layout)
         return dashboard
-
-
-    # def _create_dashboard(self) -> QGroupBox:
-    #     dashboard = QGroupBox("Sensor Dashboard")
-    #     layout = QGridLayout()
-    #     self.spectral_curves = []
-
-    #     def add_graph(title: str, y_label: str, pen_color: str, position: tuple) -> None:
-    #         pw = PlotWidget(title=title)
-    #         pw.setLabel("left", y_label)
-    #         curve = pw.plot(pen=pen_color)
-    #         self.graphs[title] = curve
-    #         self.plots[title] = pw
-    #         layout.addWidget(pw, *position)
-
-    #     # Main time-series graphs
-    #     add_graph("Temperature (°C)", "Temperature (°C)", "g", (0, 0))
-    #     add_graph("pH Value", "pH", "b", (0, 1))
-    #     add_graph("Harvesting Rate (kg/h)", "kg/h", "y", (0, 2))
-
-    #     # Spectral colours and labels
-    #     self.spectral_colors = [
-    #         (148, 0, 211),   # F1
-    #         (75, 0, 130),    # F2
-    #         (0, 0, 255),     # F3
-    #         (0, 255, 255),   # F4
-    #         (0, 255, 0),     # F5 (Green)
-    #         (173, 255, 47),  # F6
-    #         (255, 165, 0),   # F7
-    #         (255, 69, 0),    # F8
-    #         (255, 0, 0),     # CLEAR
-    #         (139, 0, 0),     # NIR
-    #     ]
-
-    #     self.channel_labels = [
-    #         "F1",
-    #         "F2",
-    #         "F3",
-    #         "F4",
-    #         "Green – 555nm",
-    #         "F6",
-    #         "F7",
-    #         "F8",
-    #         "CLEAR",
-    #         "NIR",
-    #     ]
-
-    #     # Multi-Spectral Analysis (line plot)
-    #     self.multi_spectral_analysis_plot = PlotWidget(title="Multi-Spectral Analysis")
-    #     self.multi_spectral_analysis_plot.setLabel("left", "Intensity")
-    #     self.multi_spectral_analysis_plot.setLabel("bottom", "Channel index")
-    #     self.multi_spectral_analysis_plot.addLegend()
-    #     self.plots["Multi-Spectral Analysis"] = self.multi_spectral_analysis_plot
-
-    #     for color, label in zip(self.spectral_colors, self.channel_labels):
-    #         pen = mkPen(color=color, width=2)
-    #         curve = self.multi_spectral_analysis_plot.plot(pen=pen, name=label)
-    #         self.spectral_curves.append(curve)
-
-    #     layout.addWidget(self.multi_spectral_analysis_plot, 1, 0, 1, 3)
-
-    #     # Real-time bar graph snapshot
-    #     self.spectral_bar_values = [0] * len(self.channel_labels)
-    #     self.spectral_bar_plot = PlotWidget(title="Multi-Spectral Snapshot")
-    #     self.spectral_bar_plot.setLabel("left", "Intensity")
-    #     self.spectral_bar_plot.setLabel("bottom", "Channel")
-    #     self.spectral_bar_plot.setYRange(0, 4095)
-
-    #     x_positions = list(range(len(self.channel_labels)))
-    #     self.spectral_bar_item = BarGraphItem(
-    #         x=x_positions,
-    #         height=self.spectral_bar_values,
-    #         width=0.6,
-    #         brushes=[QColor(*color) for color in self.spectral_colors],
-    #     )
-    #     self.spectral_bar_plot.addItem(self.spectral_bar_item)
-
-    #     ax = self.spectral_bar_plot.getAxis("bottom")
-    #     ax.setTicks([list(zip(x_positions, self.channel_labels))])
-
-    #     layout.addWidget(self.spectral_bar_plot, 2, 0, 1, 3)
-
-    #     dashboard.setLayout(layout)
-    #     return dashboard
-
 
 
 
@@ -949,24 +649,6 @@ class IndustrialHMIMonitor(QMainWindow):
 
             self._update_graph("Harvesting Rate (%)", harvest_pct)
 
-        # if "temperature" in data:
-        #     self._update_graph("Temperature (°C)", data["temperature"])
-
-        # ph_obj = data.get("pH", {})
-        # if isinstance(ph_obj, dict) and "value" in ph_obj:
-        #     self._update_graph("pH Value", ph_obj["value"])
-
-        # # Harvesting rate from green spectral channel
-        # light = data.get("light", [])
-        # if isinstance(light, list) and len(light) > GREEN_CHANNEL_INDEX:
-        #     raw_green = light[GREEN_CHANNEL_INDEX]
-        #     kg_hr = (
-        #         (HARVEST_NONE_VALUE - raw_green)
-        #         * HARVEST_MAX_KG_PER_HOUR
-        #         / (HARVEST_NONE_VALUE - HARVEST_FULL_VALUE)
-        #     )
-        #     kg_hr = max(0.0, min(HARVEST_MAX_KG_PER_HOUR, kg_hr))
-        #     self._update_graph("Harvesting Rate (kg/h)", kg_hr)
 
         # Spectral time-series curves
         if isinstance(light, list):
