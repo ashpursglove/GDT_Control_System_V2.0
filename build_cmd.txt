@@ -1,0 +1,24 @@
+pyinstaller --onefile --windowed --name "gui" --icon pepeico.ico main.py
+
+
+
+BASH
+pyinstaller ^
+  --onefile ^
+  --windowed ^
+  --name "GDT_Control_System" ^
+  --icon assets/icon.ico ^
+  --add-data "assets;assets" ^
+  main.py
+
+
+
+POWERSHELL
+
+pyinstaller `
+  --onefile `
+  --windowed `
+  --name "GDT_Control_System" `
+  --icon assets/icon.ico `
+  --add-data "assets;assets" `
+  main.py
