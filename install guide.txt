@@ -1,0 +1,49 @@
+-- Download from GitHub
+
+git clone https://github.com/ashpursglove/GDT_Control_System_V2.0.git
+
+cd GDT_Control_System_V2.0
+
+
+
+-- Create and activate a virtual environment (venv)
+
+python3 -m venv .venv
+
+source .venv/bin/activate
+
+pip install --upgrade pip wheel
+
+
+
+-- Install Python dependencies (inside the venv)
+
+pip install -r requirements.txt
+
+
+
+-- Give permission to access the USB serial port (RS-485)
+
+sudo usermod -a -G dialout $USER
+
+
+
+-- Reboot so the change takes effect
+
+sudo reboot
+
+
+
+
+-- After reboot: go back to the project file and re-activate the venv
+
+source .venv/bin/activate
+
+
+-- run the program
+
+python main.py
+
+
+
+
