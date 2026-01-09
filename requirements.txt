@@ -1,0 +1,9 @@
+# Core Modbus + serial communication
+minimalmodbus
+pyserial
+
+# Plotting / visualisation
+pyqtgraph
+
+# Numeric handling (used by pyqtgraph + data processing)
+numpy
