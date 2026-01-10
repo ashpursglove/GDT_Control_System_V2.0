@@ -20,6 +20,8 @@ pip install --upgrade pip wheel
 
 pip install -r requirements.txt
 
+sudo apt install -y python3-pyqt5
+
 
 
 -- Give permission to access the USB serial port (RS-485)
